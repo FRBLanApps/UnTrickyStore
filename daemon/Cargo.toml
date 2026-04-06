@@ -13,6 +13,7 @@ path = "src/main.rs"
 
 [dependencies]
 libc = "0.2"
+gettext = "0.4"
 
 [profile.release]
 lto = true

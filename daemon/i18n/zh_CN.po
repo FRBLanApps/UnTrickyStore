@@ -1,0 +1,52 @@
+# UnTrickyStore - Simplified Chinese translation
+# Copyright (C) 2025-2026 FRBLanApps
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: uts 0.1.0\n"
+"Language: zh_CN\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: service.rs - multiple root warning
+msgid "Multi: %s"
+msgstr "多Root: %s"
+
+#: webui.rs - no host app
+msgid "No WebUI host app found, please install MMRL or KSU WebUI"
+msgstr "未找到WebUI宿主应用，请安装MMRL或KSU WebUI"
+
+#: conflict.rs - module conflicts
+msgid "Conflicting modules detected: %s"
+msgstr "检测到冲突模块: %s"
+
+#: conflict.rs - app conflicts
+msgid "Conflicting apps detected: %s"
+msgstr "检测到冲突应用: %s"
+
+#: props.rs - vbhash errors
+msgid "Failed to install service app"
+msgstr "安装服务应用失败"
+
+msgid "Content provider returned no valid hash, generating random"
+msgstr "ContentProvider未返回有效哈希，生成随机值"
+
+#: patch.rs
+msgid "Failed to download bulletin page"
+msgstr "下载安全公告页面失败"
+
+msgid "Could not parse date from bulletin"
+msgstr "无法从安全公告中解析日期"
+
+msgid "Invalid date in security_patch.txt"
+msgstr "security_patch.txt 中的日期无效"
+
+#: service.rs
+msgid "TrickyStore service.sh not found"
+msgstr "TrickyStore 的 service.sh 未找到"
+
+#: daemon.rs
+msgid "/data/app not found"
+msgstr "/data/app 目录不存在"

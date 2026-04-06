@@ -41,7 +41,7 @@ pub fn ts_ctl(action: &str) -> Result<(), String> {
                     .spawn();
                 common::log_i("ts-ctl", "started via service.sh");
             } else {
-                return Err("ts-ctl: service.sh not found".into());
+                return Err(crate::i18n::t("TrickyStore service.sh not found"));
             }
         }
         "restart" => {
@@ -134,10 +134,7 @@ pub fn status() -> Result<(), String> {
         if m.is_empty() {
             String::new()
         } else {
-            common::bi_str(
-                &format!(" ⚠多Root: {m}"),
-                &format!(" ⚠Multi: {m}"),
-            )
+            format!(" ⚠{}", crate::i18n::t_fmt("Multi: %s", &m))
         }
     } else {
         String::new()
@@ -151,19 +148,11 @@ pub fn status() -> Result<(), String> {
         _ => "trick_store",
     };
     let ts_running = !common::pidof(ts_daemon).is_empty();
-    let ts_status = if ts_running {
-        common::bi_str("✅", "✅")
-    } else {
-        common::bi_str("❌", "❌")
-    };
+    let ts_status = if ts_running { "✅" } else { "❌" };
 
     // UTS daemon status
     let uts_running = !common::pidof("uts").is_empty();
-    let uts_status = if uts_running {
-        common::bi_str("✅", "✅")
-    } else {
-        common::bi_str("❌", "❌")
-    };
+    let uts_status = if uts_running { "✅" } else { "❌" };
 
     // Security patch
     let patch_file = format!("{cfg}/security_patch.txt");

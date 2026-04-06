@@ -49,11 +49,7 @@ pub fn launch() -> Result<(), String> {
         return Err("webui: failed to install webui host apk".into());
     }
 
-    Err(common::bi_str(
-        "webui: 未找到WebUI宿主应用，请安装MMRL或KSU WebUI",
-        "webui: no WebUI host app found, install MMRL or KSU WebUI",
-    )
-    .to_string())
+    Err(crate::i18n::t("No WebUI host app found, please install MMRL or KSU WebUI"))
 }
 
 fn launch_mmrl(module_id: &str) -> Result<(), String> {

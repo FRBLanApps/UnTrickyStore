@@ -8,6 +8,7 @@
 mod common;
 mod conflict;
 mod daemon;
+mod i18n;
 mod patch;
 mod props;
 mod rootdetect;
@@ -54,6 +55,7 @@ fn main() -> ExitCode {
     }
 
     common::log_init();
+    i18n::init();
 
     let cmd = args[1].as_str();
     let rest: Vec<&str> = args[2..].iter().map(|s| s.as_str()).collect();

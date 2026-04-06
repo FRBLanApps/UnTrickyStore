@@ -24,22 +24,7 @@ pub fn ts_cfg() -> String { format!("{ADB}/{TS}") }
 pub fn uts_bin() -> String { format!("{}/{UTS}/bin", MODULES) }
 pub fn log_path() -> String { format!("{ADB}/{UTS}/log/log.log") }
 
-// ── Locale ──────────────────────────────────────────────────
-pub fn is_chinese() -> bool {
-    let locale = getprop("persist.sys.locale");
-    let product = getprop("ro.product.locale");
-    locale.contains("zh") || product.contains("zh")
-}
-
-/// Print bilingual message: (chinese, english)
-pub fn bi(cn: &str, en: &str) {
-    if is_chinese() { println!("{cn}"); } else { println!("{en}"); }
-}
-
-/// Return bilingual string
-pub fn bi_str(cn: &str, en: &str) -> &str {
-    if is_chinese() { cn } else { en }
-}
+// ── i18n (see i18n.rs) ──────────────────────────────────────
 
 // ── Logging ─────────────────────────────────────────────────
 pub fn log_init() {
