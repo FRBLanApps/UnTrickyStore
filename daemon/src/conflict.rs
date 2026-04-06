@@ -29,12 +29,14 @@ const CONFLICT_MODULES: &[&str] = &[
     "tricky_store_assistant",
     "extreme_hide_bootloader",
     "wjw_hiderootauxiliarymod",
+    "ts_enhancer_extereme"
 ];
 
 /// Apps (package names) that conflict with us.
 const CONFLICT_APPS: &[&str] = &[
     "com.lingqiaohan.appbl",
     "com.topmiaohuan.hidebllist",
+    "io.github.xtrlumen.vbmeta"
 ];
 
 /// Check for conflicting modules. Returns Err with list if any found.
