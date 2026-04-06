@@ -63,7 +63,7 @@ pub fn run() -> anyhow::Result<()> {
     }
 
     unsafe {
-        libc::inotify_rm_watch(fd, wd);
+        libc::inotify_rm_watch(fd, wd as _);
         libc::close(fd);
     }
     Ok(())

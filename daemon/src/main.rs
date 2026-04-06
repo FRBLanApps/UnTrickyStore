@@ -77,7 +77,8 @@ fn main() -> ExitCode {
         "init-cfg"     => init_cfg(),
         _ => {
             usage();
-            anyhow::bail!("unknown command: {cmd}")
+            log::error!(target: "main", "unknown command: {cmd}");
+            return ExitCode::FAILURE;
         }
     };
 
