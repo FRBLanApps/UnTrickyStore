@@ -47,11 +47,18 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build module ZIP
-        run: ./gradlew :module:zipRelease
+        run: ./gradlew :module:zip
 
-      - name: Upload artifact
+      - name: Upload release artifact
         uses: actions/upload-artifact@v4
         with:
-          name: UnTrickyStore-${{ github.sha }}
+          name: UnTrickyStore-release-${{ github.sha }}
           path: module/build/outputs/release/*.zip
+          if-no-files-found: error
+
+      - name: Upload debug artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: UnTrickyStore-debug-${{ github.sha }}
+          path: module/build/outputs/debug/*.zip
           if-no-files-found: error
