@@ -11,7 +11,7 @@ listOf("debug", "release").forEach { variantName ->
     tasks.register<Exec>("buildDaemon$variantCapped") {
         group = "rust"
         workingDir = projectDir
-        commandLine("cargo", "ndk", "-t", "arm64-v8a", "-o", "target/aarch64-linux-android/$variantLowered", "build", *cargoFlag.split(" ").filter { it.isNotEmpty() }.toTypedArray())
+        commandLine("cargo", "ndk", "-t", "arm64-v8a", "build", *cargoFlag.split(" ").filter { it.isNotEmpty() }.toTypedArray())
         environment("CARGO_TARGET_DIR", "$projectDir/target_ndk")
         doFirst {
             println("Building uts binary ($variantLowered)...")
