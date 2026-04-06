@@ -1,0 +1,6 @@
+id=${moduleId}
+name=${moduleName}
+version=${versionName}
+versionCode=${versionCode}
+author=FRBLanApps
+description=[🔄]Make TrickyStore Configure Untricky.│让 TrickyStore 的配置变得不再棘手.

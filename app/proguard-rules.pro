@@ -1,0 +1,3 @@
+-dontwarn **
+-keep class io.github.frblanapps.untrickystore.Provider { *; }
+-keep class io.github.frblanapps.untrickystore.execute.** { *; }
