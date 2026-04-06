@@ -13,8 +13,13 @@ UTS="$MODDIR/bin/uts"
 # --- Root detection ---
 "$UTS" rootdetect >/dev/null 2>&1
 
-# --- Conflict: modules ---
-"$UTS" conflict-mod
+# --- Conflict: modules (block if found) ---
+if ! "$UTS" conflict-mod; then
+  # Conflicts detected — abort and mark module as broken
+  touch "$MODDIR/disable"
+  "$UTS" status
+  exit 1
+fi
 
 # --- Environment sanity check ---
 CFG="/data/adb/untrickystore"

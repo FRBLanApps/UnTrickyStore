@@ -77,7 +77,7 @@ fn main() -> ExitCode {
         "init-cfg"     => init_cfg(),
         _ => {
             usage();
-            Err(format!("unknown command: {cmd}"))
+            anyhow::bail!("unknown command: {cmd}")
         }
     };
 

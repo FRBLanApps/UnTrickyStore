@@ -2,227 +2,551 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>UnTrickyStore</title>
 <style>
 :root {
-  --bg: #121212;
-  --surface: #1e1e1e;
+  --bg: #0f0f0f;
+  --surface: #1a1a1a;
+  --surface2: #242424;
   --primary: #bb86fc;
+  --primary-dim: #9a67ea;
   --on-bg: #e0e0e0;
   --on-surface: #ffffff;
   --ok: #66bb6a;
   --err: #ef5350;
   --warn: #ffa726;
-  --border: #333;
+  --border: #2a2a2a;
+  --radius: 14px;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background: var(--bg);
   color: var(--on-bg);
-  padding: 16px;
-  max-width: 600px;
+  max-width: 520px;
   margin: 0 auto;
+  padding: 0 0 80px;
+  min-height: 100vh;
+  -webkit-tap-highlight-color: transparent;
 }
-h1 {
+
+/* ── Header ── */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg);
+  padding: 16px 16px 0;
+}
+.header h1 {
   color: var(--primary);
-  font-size: 1.4em;
-  margin-bottom: 16px;
+  font-size: 1.3em;
+  font-weight: 700;
   text-align: center;
+  margin-bottom: 12px;
 }
+.header h1 span { font-weight: 400; color: #888; font-size: 0.65em; }
+
+/* ── Tabs ── */
+.tab-bar {
+  display: flex;
+  background: var(--surface);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+}
+.tab-bar button {
+  flex: 1;
+  padding: 8px 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #888;
+  font-size: 0.82em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.tab-bar button.active {
+  background: var(--primary);
+  color: #000;
+}
+.tab-page { display: none; padding: 12px 16px; }
+.tab-page.active { display: block; }
+
+/* ── Cards ── */
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 12px;
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 10px;
 }
 .card-title {
-  font-size: 0.85em;
-  color: #999;
+  font-size: 0.75em;
+  color: #777;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.8px;
   margin-bottom: 8px;
+  font-weight: 600;
 }
-.status-row {
+.row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 6px 0;
+  padding: 7px 0;
 }
-.status-row + .status-row {
-  border-top: 1px solid var(--border);
-}
+.row + .row { border-top: 1px solid var(--border); }
+.row .label { font-size: 0.9em; }
 .badge {
   display: inline-block;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 0.85em;
-  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 6px;
+  font-size: 0.8em;
+  font-weight: 700;
 }
-.badge-ok { background: var(--ok); color: #000; }
-.badge-err { background: var(--err); color: #fff; }
-.badge-warn { background: var(--warn); color: #000; }
-.btn-row {
-  display: flex;
+.b-ok { background: var(--ok); color: #000; }
+.b-err { background: var(--err); color: #fff; }
+.b-warn { background: var(--warn); color: #000; }
+.b-muted { background: var(--surface2); color: #888; }
+
+/* ── Buttons ── */
+.btn-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 12px;
+  margin-top: 6px;
 }
-button {
-  flex: 1;
-  min-width: 100px;
-  padding: 10px;
+.btn {
+  padding: 11px 8px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
+  background: var(--surface2);
+  color: var(--on-bg);
+  font-weight: 600;
+  font-size: 0.85em;
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+  overflow: hidden;
+}
+.btn:active { transform: scale(0.97); opacity: 0.8; }
+.btn.accent { background: var(--primary); color: #000; }
+.btn.danger { background: var(--err); color: #fff; }
+.btn .icon { margin-right: 4px; }
+.btn.loading { pointer-events: none; opacity: 0.6; }
+.btn.loading::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(90deg, transparent, rgba(255,255,255,0.1) 50%, transparent);
+  animation: shimmer 1s infinite;
+}
+@keyframes shimmer { to { transform: translateX(100%); } }
+
+/* ── Targets ── */
+.target-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.target-header .count { color: var(--primary); font-weight: 700; font-size: 1.1em; }
+.target-list {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  max-height: 320px;
+  overflow-y: auto;
+  font-family: "Cascadia Code", "Fira Code", monospace;
+  font-size: 0.78em;
+  color: #bbb;
+}
+.target-list .item {
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border);
+  word-break: break-all;
+}
+.target-list .item:last-child { border-bottom: none; }
+.target-list .empty { padding: 20px; text-align: center; color: #666; }
+
+.file-edit {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-family: "Cascadia Code", "Fira Code", monospace;
+  font-size: 0.78em;
+  color: #ccc;
+  width: 100%;
+  min-height: 80px;
+  resize: vertical;
+  outline: none;
+}
+.file-edit:focus { border-color: var(--primary); }
+.file-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 10px 0 4px;
+}
+.save-btn {
+  padding: 4px 12px;
+  border: none;
+  border-radius: 6px;
   background: var(--primary);
   color: #000;
+  font-size: 0.78em;
   font-weight: 600;
-  font-size: 0.9em;
   cursor: pointer;
-  transition: opacity 0.2s;
 }
-button:active { opacity: 0.7; }
-button.danger { background: var(--err); color: #fff; }
-#log {
-  background: #0a0a0a;
+
+/* ── Log ── */
+#log-box {
+  background: #050505;
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 12px;
+  border-radius: 10px;
+  padding: 10px 12px;
   font-family: "Cascadia Code", "Fira Code", monospace;
-  font-size: 0.8em;
-  max-height: 300px;
+  font-size: 0.72em;
+  max-height: 400px;
   overflow-y: auto;
   white-space: pre-wrap;
   word-break: break-all;
-  color: #aaa;
+  color: #999;
+  line-height: 1.5;
 }
+#log-box .err { color: var(--err); }
+#log-box .warn { color: var(--warn); }
+
+/* ── Toast ── */
+.toast-container {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: none;
+  max-width: 400px;
+  width: 90%;
+}
+.toast {
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 0.85em;
+  font-weight: 600;
+  text-align: center;
+  animation: toast-in 0.3s ease, toast-out 0.3s ease 2.5s forwards;
+  pointer-events: auto;
+}
+.toast.ok { background: var(--ok); color: #000; }
+.toast.fail { background: var(--err); color: #fff; }
+@keyframes toast-in { from { opacity: 0; transform: translateY(-12px); } }
+@keyframes toast-out { to { opacity: 0; transform: translateY(-12px); } }
 </style>
 </head>
 <body>
 
-<h1>UnTrickyStore</h1>
+<div class="toast-container" id="toasts"></div>
 
-<div class="card">
-  <div class="card-title">Environment</div>
-  <div class="status-row">
-    <span>Root</span>
-    <span id="root-type" class="badge badge-ok">...</span>
-  </div>
-  <div class="status-row">
-    <span>Kernel</span>
-    <span id="kernel-ver">...</span>
-  </div>
-  <div class="status-row">
-    <span>TrickyStore</span>
-    <span id="ts-status" class="badge badge-ok">...</span>
-  </div>
-  <div class="status-row">
-    <span>UTS Daemon</span>
-    <span id="uts-status" class="badge badge-ok">...</span>
-  </div>
-  <div class="status-row">
-    <span>Security Patch</span>
-    <span id="spl">...</span>
+<div class="header">
+  <h1>UnTrickyStore <span id="ver"></span></h1>
+  <div class="tab-bar" id="tabs">
+    <button class="active" data-tab="status">Status</button>
+    <button data-tab="actions">Actions</button>
+    <button data-tab="targets">Targets</button>
+    <button data-tab="log">Log</button>
   </div>
 </div>
 
-<div class="card">
-  <div class="card-title">Actions</div>
-  <div class="btn-row">
-    <button onclick="exec('target')">Refresh Targets</button>
-    <button onclick="exec('propstate')">Spoof Props</button>
+<!-- ════ Status ════ -->
+<div class="tab-page active" id="page-status">
+  <div class="card">
+    <div class="card-title">Environment</div>
+    <div class="row"><span class="label">Root</span><span id="s-root" class="badge b-muted">...</span></div>
+    <div class="row"><span class="label">Kernel</span><span id="s-kernel">...</span></div>
+    <div class="row"><span class="label">TrickyStore</span><span id="s-ts" class="badge b-muted">...</span></div>
+    <div class="row"><span class="label">UTS Daemon</span><span id="s-uts" class="badge b-muted">...</span></div>
   </div>
-  <div class="btn-row">
-    <button onclick="exec('patch-fetch')">Fetch SPL</button>
-    <button onclick="exec('patch-sync')">Sync SPL</button>
+  <div class="card">
+    <div class="card-title">Security</div>
+    <div class="row"><span class="label">Patch Level</span><span id="s-spl">...</span></div>
+    <div class="row"><span class="label">VBMeta Hash</span><span id="s-vb">...</span></div>
+    <div class="row"><span class="label">Conflicts</span><span id="s-conflict" class="badge b-muted">...</span></div>
   </div>
-  <div class="btn-row">
-    <button onclick="exec('ts-ctl restart')">Restart TS</button>
-    <button onclick="exec('uts-ctl restart')">Restart UTS</button>
-  </div>
-  <div class="btn-row">
-    <button onclick="exec('conflict-mod')">Check Conflicts</button>
-    <button onclick="exec('vbhash')">Fix VBHash</button>
+  <div class="card">
+    <div class="card-title">Targets</div>
+    <div class="row"><span class="label">Packages in target.txt</span><span id="s-targets" class="badge b-muted">...</span></div>
   </div>
 </div>
 
-<div class="card">
-  <div class="card-title">Log</div>
-  <div id="log">Loading...</div>
+<!-- ════ Actions ════ -->
+<div class="tab-page" id="page-actions">
+  <div class="card">
+    <div class="card-title">Property & Patch</div>
+    <div class="btn-grid">
+      <button class="btn accent" onclick="run('propstate')"><span class="icon">🔒</span>Spoof Props</button>
+      <button class="btn accent" onclick="run('vbhash')"><span class="icon">🔑</span>Fix VBHash</button>
+      <button class="btn" onclick="run('patch-fetch')"><span class="icon">📥</span>Fetch SPL</button>
+      <button class="btn" onclick="run('patch-sync')"><span class="icon">📤</span>Sync SPL</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Service Control</div>
+    <div class="btn-grid">
+      <button class="btn" onclick="run('ts-ctl restart')"><span class="icon">🔄</span>Restart TS</button>
+      <button class="btn" onclick="run('uts-ctl restart')"><span class="icon">🔄</span>Restart UTS</button>
+      <button class="btn danger" onclick="run('ts-ctl stop')"><span class="icon">⏹</span>Stop TS</button>
+      <button class="btn danger" onclick="run('uts-ctl stop')"><span class="icon">⏹</span>Stop UTS</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Maintenance</div>
+    <div class="btn-grid">
+      <button class="btn" onclick="run('target')"><span class="icon">📋</span>Refresh Targets</button>
+      <button class="btn" onclick="run('conflict-mod')"><span class="icon">⚠</span>Check Mod Conflicts</button>
+      <button class="btn" onclick="run('conflict-app')"><span class="icon">⚠</span>Check App Conflicts</button>
+      <button class="btn" onclick="run('status')"><span class="icon">📝</span>Refresh Status</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ Targets ════ -->
+<div class="tab-page" id="page-targets">
+  <div class="card">
+    <div class="target-header">
+      <div class="card-title" style="margin:0">target.txt</div>
+      <div class="count" id="t-count">0</div>
+    </div>
+    <div class="target-list" id="t-list"><div class="empty">Loading...</div></div>
+    <div class="btn-grid" style="margin-top:10px">
+      <button class="btn accent" onclick="run('target');setTimeout(loadTargets,1500)"><span class="icon">🔄</span>Regenerate</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="file-label">
+      <span class="card-title" style="margin:0">usr.txt <span style="color:#666;text-transform:none">(exclude)</span></span>
+      <button class="save-btn" onclick="saveFile('usr')">Save</button>
+    </div>
+    <textarea class="file-edit" id="edit-usr" placeholder="# One package per line&#10;com.example.app"></textarea>
+  </div>
+  <div class="card">
+    <div class="file-label">
+      <span class="card-title" style="margin:0">sys.txt <span style="color:#666;text-transform:none">(include)</span></span>
+      <button class="save-btn" onclick="saveFile('sys')">Save</button>
+    </div>
+    <textarea class="file-edit" id="edit-sys" placeholder="# System packages to add&#10;com.android.vending"></textarea>
+  </div>
+</div>
+
+<!-- ════ Log ════ -->
+<div class="tab-page" id="page-log">
+  <div class="card" style="padding:10px">
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <button class="btn" style="flex:1" onclick="loadLog()"><span class="icon">🔄</span>Refresh</button>
+      <button class="btn danger" style="flex:1" onclick="clearLog()"><span class="icon">🗑</span>Clear</button>
+    </div>
+    <div id="log-box">Loading...</div>
+  </div>
 </div>
 
 <script>
-const UTS_BIN = '/data/adb/modules/untrickystore/bin/uts';
+const BIN = '/data/adb/modules/untrickystore/bin/uts';
 const CFG = '/data/adb/untrickystore';
+const TS_DIR = '/data/adb/modules/tricky_store';
+let refreshTimer = null;
 
-// KSU WebUI / MMRL exec bridge
-function shellExec(cmd) {
-  return new Promise((resolve) => {
+// ── i18n ──
+const zh = navigator.language.startsWith('zh');
+const L = {
+  running:   zh ? '运行中' : 'Running',
+  stopped:   zh ? '已停止' : 'Stopped',
+  unknown:   zh ? '未知'   : 'Unknown',
+  none:      zh ? '无'     : 'None',
+  clean:     zh ? '无冲突' : 'Clean',
+  found:     zh ? '有冲突' : 'Found',
+  noLog:     zh ? '暂无日志' : 'No log',
+  cleared:   zh ? '日志已清除' : 'Log cleared',
+  saved:     zh ? '已保存' : 'Saved',
+  ok:        zh ? '成功'   : 'OK',
+  fail:      zh ? '失败'   : 'Failed',
+  empty:     zh ? '空'     : 'Empty',
+};
+
+// ── Shell bridge ──
+function sh(cmd) {
+  return new Promise(resolve => {
     try {
-      // KernelSU WebUI API
-      if (typeof ksu !== 'undefined' && ksu.exec) {
-        ksu.exec(cmd, {}, (ret) => resolve(ret));
-        return;
-      }
-      // MMRL API
-      if (typeof mmrl !== 'undefined' && mmrl.exec) {
-        mmrl.exec(cmd, (ret) => resolve(ret));
-        return;
-      }
-    } catch (_) {}
-    resolve({ errno: -1, stdout: '', stderr: 'No WebUI host API available' });
+      if (typeof ksu !== 'undefined' && ksu.exec)
+        return ksu.exec(cmd, {}, r => resolve(r));
+      if (typeof mmrl !== 'undefined' && mmrl.exec)
+        return mmrl.exec(cmd, r => resolve(r));
+    } catch(_) {}
+    resolve({ errno: -1, stdout: '', stderr: 'No API' });
   });
 }
 
-async function readFile(path) {
-  const ret = await shellExec(`cat "${path}" 2>/dev/null`);
-  return (ret && ret.stdout) ? ret.stdout.trim() : '';
+async function cat(path) {
+  const r = await sh(`cat "${path}" 2>/dev/null`);
+  return (r && r.stdout) ? r.stdout.trim() : '';
 }
 
+// ── Toast ──
+function toast(msg, ok) {
+  const el = document.createElement('div');
+  el.className = 'toast ' + (ok ? 'ok' : 'fail');
+  el.textContent = msg;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+// ── Tabs ──
+document.getElementById('tabs').addEventListener('click', e => {
+  const btn = e.target.closest('button[data-tab]');
+  if (!btn) return;
+  document.querySelectorAll('.tab-bar button').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('page-' + btn.dataset.tab).classList.add('active');
+  if (btn.dataset.tab === 'targets') loadTargets();
+  if (btn.dataset.tab === 'log') loadLog();
+});
+
+// ── Status refresh ──
 async function refresh() {
-  const root = await readFile(`${CFG}/root.txt`);
-  const kernel = await readFile(`${CFG}/kernel.txt`);
-  const multi = await readFile(`${CFG}/multiple.txt`);
-  const spl = await readFile(`${CFG}/security_patch.txt`);
+  const [root, kernel, multi, spl, vb] = await Promise.all([
+    cat(`${CFG}/root.txt`),
+    cat(`${CFG}/kernel.txt`),
+    cat(`${CFG}/multiple.txt`),
+    cat(`${CFG}/security_patch.txt`),
+    cat(`${CFG}/verifiedboothash.txt`),
+  ]);
 
-  const rootEl = document.getElementById('root-type');
-  rootEl.textContent = root || 'Unknown';
-  rootEl.className = 'badge ' + (multi ? 'badge-warn' : (root ? 'badge-ok' : 'badge-err'));
+  const rootEl = document.getElementById('s-root');
+  rootEl.textContent = root || L.unknown;
+  rootEl.className = 'badge ' + (multi ? 'b-warn' : root && root !== 'NULL' ? 'b-ok' : 'b-err');
+  if (multi) rootEl.textContent += ' ⚠';
 
-  document.getElementById('kernel-ver').textContent = kernel || '-';
-  document.getElementById('spl').textContent = spl || '-';
+  document.getElementById('s-kernel').textContent = kernel || '-';
+  document.getElementById('s-spl').textContent = spl || '-';
 
-  // Check processes
-  const tsRet = await shellExec('pidof trick_store 2>/dev/null || pidof trick_simulator 2>/dev/null');
-  const tsEl = document.getElementById('ts-status');
-  const tsRunning = tsRet && tsRet.stdout && tsRet.stdout.trim();
-  tsEl.textContent = tsRunning ? 'Running' : 'Stopped';
-  tsEl.className = 'badge ' + (tsRunning ? 'badge-ok' : 'badge-err');
+  const vbEl = document.getElementById('s-vb');
+  vbEl.textContent = vb ? vb.substring(0, 16) + '...' : '-';
+  vbEl.title = vb;
 
-  const utsRet = await shellExec('pidof uts 2>/dev/null');
-  const utsEl = document.getElementById('uts-status');
-  const utsRunning = utsRet && utsRet.stdout && utsRet.stdout.trim();
-  utsEl.textContent = utsRunning ? 'Running' : 'Stopped';
-  utsEl.className = 'badge ' + (utsRunning ? 'badge-ok' : 'badge-err');
+  // Processes
+  const [tsRet, utsRet] = await Promise.all([
+    sh('pidof trick_store 2>/dev/null || pidof trick_simulator 2>/dev/null'),
+    sh('pidof uts 2>/dev/null'),
+  ]);
 
-  // Read log tail
-  const logRet = await shellExec(`tail -n 50 "${CFG}/log/log.log" 2>/dev/null`);
-  document.getElementById('log').textContent = (logRet && logRet.stdout) ? logRet.stdout : 'No log available';
+  const tsOn = tsRet && tsRet.stdout && tsRet.stdout.trim();
+  const utsOn = utsRet && utsRet.stdout && utsRet.stdout.trim();
+  setBadge('s-ts', tsOn, L.running, L.stopped);
+  setBadge('s-uts', utsOn, L.running, L.stopped);
+
+  // Conflict check (silent)
+  const confRet = await sh(`${BIN} conflict-mod 2>&1; echo "---"; ${BIN} conflict-app 2>&1`);
+  const confOut = (confRet && (confRet.stdout || confRet.stderr)) || '';
+  const hasConf = confOut.includes('conflicting');
+  const confEl = document.getElementById('s-conflict');
+  confEl.textContent = hasConf ? L.found : L.clean;
+  confEl.className = 'badge ' + (hasConf ? 'b-err' : 'b-ok');
+
+  // Target count
+  const tgt = await cat(`${TS_DIR}/target.txt`);
+  const cnt = tgt ? tgt.split('\n').filter(l => l.trim()).length : 0;
+  const tEl = document.getElementById('s-targets');
+  tEl.textContent = cnt;
+  tEl.className = 'badge ' + (cnt > 0 ? 'b-ok' : 'b-muted');
+
+  // Version from module.prop
+  const prop = await cat('/data/adb/modules/untrickystore/module.prop');
+  const verLine = prop.split('\n').find(l => l.startsWith('version='));
+  document.getElementById('ver').textContent = verLine ? verLine.replace('version=', '') : '';
 }
 
-async function exec(subcmd) {
-  const logEl = document.getElementById('log');
-  logEl.textContent += `\n> uts ${subcmd}\n`;
-  const ret = await shellExec(`${UTS_BIN} ${subcmd} 2>&1`);
-  if (ret && ret.stdout) logEl.textContent += ret.stdout + '\n';
-  if (ret && ret.stderr) logEl.textContent += ret.stderr + '\n';
-  logEl.scrollTop = logEl.scrollHeight;
-  setTimeout(refresh, 1000);
+function setBadge(id, on, yesText, noText) {
+  const el = document.getElementById(id);
+  el.textContent = on ? yesText : noText;
+  el.className = 'badge ' + (on ? 'b-ok' : 'b-err');
 }
 
+// ── Actions ──
+async function run(subcmd) {
+  const btns = document.querySelectorAll(`.btn`);
+  // Find clicked button (approximate)
+  const clickedBtn = event && event.target.closest('.btn');
+  if (clickedBtn) clickedBtn.classList.add('loading');
+
+  const ret = await sh(`${BIN} ${subcmd} 2>&1`);
+  const out = (ret && (ret.stdout || '')) + (ret && (ret.stderr || ''));
+  const ok = ret && ret.errno === 0;
+
+  toast(`${subcmd}: ${ok ? L.ok : L.fail}`, ok);
+  if (clickedBtn) clickedBtn.classList.remove('loading');
+  setTimeout(refresh, 800);
+}
+
+// ── Targets ──
+async function loadTargets() {
+  const tgt = await cat(`${TS_DIR}/target.txt`);
+  const list = document.getElementById('t-list');
+  const lines = tgt ? tgt.split('\n').filter(l => l.trim()) : [];
+  document.getElementById('t-count').textContent = lines.length;
+
+  if (lines.length === 0) {
+    list.innerHTML = `<div class="empty">${L.empty}</div>`;
+  } else {
+    list.innerHTML = lines.map(l => `<div class="item">${l}</div>`).join('');
+  }
+
+  // Load edit files
+  const [usr, sys] = await Promise.all([
+    cat(`${CFG}/usr.txt`),
+    cat(`${CFG}/sys.txt`),
+  ]);
+  document.getElementById('edit-usr').value = usr;
+  document.getElementById('edit-sys').value = sys;
+}
+
+async function saveFile(type) {
+  const content = document.getElementById('edit-' + type).value;
+  const path = `${CFG}/${type}.txt`;
+  await sh(`cat > "${path}" << 'UTSEOF'\n${content}\nUTSEOF`);
+  toast(`${type}.txt: ${L.saved}`, true);
+}
+
+// ── Log ──
+async function loadLog() {
+  const ret = await sh(`tail -n 100 "${CFG}/log/log.log" 2>/dev/null`);
+  const box = document.getElementById('log-box');
+  const text = (ret && ret.stdout) ? ret.stdout : L.noLog;
+  // Color error/warn lines
+  box.innerHTML = text.split('\n').map(line => {
+    if (line.includes(' E ')) return `<span class="err">${esc(line)}</span>`;
+    if (line.includes(' W ')) return `<span class="warn">${esc(line)}</span>`;
+    return esc(line);
+  }).join('\n');
+  box.scrollTop = box.scrollHeight;
+}
+
+async function clearLog() {
+  await sh(`> "${CFG}/log/log.log"`);
+  document.getElementById('log-box').textContent = '';
+  toast(L.cleared, true);
+}
+
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Init ──
 refresh();
+refreshTimer = setInterval(refresh, 30000);
 </script>
 </body>
 </html>

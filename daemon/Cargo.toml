@@ -16,7 +16,7 @@ libc = "0.2"
 gettext = "0.4"
 log = "0.4"
 anyhow = "1"
-ureq = { version = "2", default-features = false, features = ["tls"] }
+ureq = { version = "2", default-features = false, features = ["rustls"] }
 
 [profile.release]
 lto = true

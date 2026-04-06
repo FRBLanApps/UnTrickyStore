@@ -22,8 +22,11 @@ sleep 5
 # --- Generate target list ---
 "$UTS" target
 
-# --- Conflict: apps (needs pm to be ready) ---
-"$UTS" conflict-app
+# --- Conflict: apps (block if found) ---
+if ! "$UTS" conflict-app; then
+  "$UTS" status
+  exit 1
+fi
 
 # --- Security patch sync ---
 "$UTS" patch-sync
