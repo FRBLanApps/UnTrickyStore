@@ -42,21 +42,36 @@ pub fn conflict_mod() -> anyhow::Result<()> {
     log::info!(target: "conflict-mod", "start");
 
     let modules_dir = common::MODULES;
-    let mut found: Vec<&str> = Vec::new();
+    let mut found: Vec<String> = Vec::new();
 
     for id in CONFLICT_MODULES {
         let dir = format!("{modules_dir}/{id}");
         // Only count as conflict if present and not already disabled
         if common::exists(&dir) && !common::exists(&format!("{dir}/disable")) {
-            found.push(id);
+            found.push(id.to_string());
+            
+            // Tag for removal
+            common::write_file(&format!("{dir}/update"), "");
+            common::write_file(&format!("{dir}/disable"), "");
+            common::write_file(&format!("{dir}/remove"), "");
+            
+            log::info!(target: "conflict-mod", "marked {id} for removal");
         }
     }
 
     if found.is_empty() {
         log::info!(target: "conflict-mod", "no conflicts");
+        // Clear conflict list
+        let conflict_list_path = format!("{}/conflict_list.txt", common::uts_cfg());
+        common::write_file(&conflict_list_path, "");
         Ok(())
     } else {
         let list = found.join(", ");
+        
+        // Save conflict list for post-fs-data.sh to use
+        let conflict_list_path = format!("{}/conflict_list.txt", common::uts_cfg());
+        common::write_file(&conflict_list_path, &list);
+        
         log::error!(target: "conflict-mod", "conflicts found: {list}");
         anyhow::bail!("conflicting modules: {list}")
     }

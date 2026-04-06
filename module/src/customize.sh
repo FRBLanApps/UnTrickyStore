@@ -9,6 +9,14 @@
 
 SKIPUNZIP=1
 
+# --- Check OverlayFS compatibility ---
+if [ -f "/data/adb/.overlayfs_enable" ] || \
+   ([ -f "/data/adb/ksu/mount_system" ] && grep -q "OVERLAYFS" "/data/adb/ksu/mount_system" 2>/dev/null); then
+    ui_print "! Error: OverlayFS mount system not supported"
+    ui_print "! Please switch to Magic Mount or Meta Module mount system"
+    abort "UnTrickyStore requires Magic Mount or Meta Module mount system"
+fi
+
 # Extract module files
 ui_print "- Extracting module files"
 unzip -o "$ZIPFILE" -x 'META-INF/*' -d "$MODPATH" >&2

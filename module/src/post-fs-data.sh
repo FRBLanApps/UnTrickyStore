@@ -9,6 +9,7 @@
 
 MODDIR="${0%/*}"
 UTS="$MODDIR/bin/uts"
+CFG="/data/adb/untrickystore"
 
 # --- Root detection ---
 "$UTS" rootdetect >/dev/null 2>&1
@@ -17,12 +18,22 @@ UTS="$MODDIR/bin/uts"
 if ! "$UTS" conflict-mod; then
   # Conflicts detected — abort and mark module as broken
   touch "$MODDIR/disable"
-  "$UTS" status
+
+  CONFLICT_LIST=$(cat "$CFG/conflict_list.txt" 2>/dev/null)
+  [ -z "$CONFLICT_LIST" ] && CONFLICT_LIST="unknown"
+
+  # Update only self module description
+  NEW_DESC="description=有冲突模块${CONFLICT_LIST}，UnTrickyStore未启动"
+  if grep -q "^description=" "$MODDIR/module.prop" 2>/dev/null; then
+    sed -i "s|^description=.*|$NEW_DESC|" "$MODDIR/module.prop"
+  else
+    echo "$NEW_DESC" >> "$MODDIR/module.prop"
+  fi
+
   exit 1
 fi
 
 # --- Environment sanity check ---
-CFG="/data/adb/untrickystore"
 ROOT=$(cat "$CFG/root.txt" 2>/dev/null)
 MULTI=$(cat "$CFG/multiple.txt" 2>/dev/null)
 TS_DIR="/data/adb/modules/tricky_store"
