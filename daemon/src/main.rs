@@ -102,5 +102,28 @@ fn init_cfg() -> anyhow::Result<()> {
             common::write_file(&path, "");
         }
     }
+
+    // OnePlus devices: ensure oplus-specific packages in sys.txt
+    let brand = common::getprop("ro.product.brand");
+    if brand.eq_ignore_ascii_case("OnePlus") {
+        let sys_path = format!("{cfg}/sys.txt");
+        let content = common::read_file(&sys_path);
+        let mut changed = false;
+        let mut buf = content.clone();
+        for pkg in &["com.oplus.engineermode", "com.coloros.sceneservice"] {
+            if !content.lines().any(|l| l.trim() == *pkg) {
+                if !buf.is_empty() && !buf.ends_with('\n') {
+                    buf.push('\n');
+                }
+                buf.push_str(pkg);
+                changed = true;
+            }
+        }
+        if changed {
+            common::write_file(&sys_path, &buf);
+            log::info!(target: "init", "added OnePlus packages to sys.txt");
+        }
+    }
+
     Ok(())
 }
