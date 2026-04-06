@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  UnTrickyStore - service app
+  Provides VBMeta hash via ContentProvider.
+  
+  Copyright (C) 2025-2026 FRBLanApps
+  SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application
+        android:allowBackup="false"
+        android:label="UnTrickyStore">
+
+        <provider
+            android:name=".Provider"
+            android:authorities="Provider"
+            android:exported="true" />
+
+    </application>
+
+</manifest>

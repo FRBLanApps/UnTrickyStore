@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UnTrickyStore</title>
+<style>
+:root {
+  --bg: #121212;
+  --surface: #1e1e1e;
+  --primary: #bb86fc;
+  --on-bg: #e0e0e0;
+  --on-surface: #ffffff;
+  --ok: #66bb6a;
+  --err: #ef5350;
+  --warn: #ffa726;
+  --border: #333;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--on-bg);
+  padding: 16px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+h1 {
+  color: var(--primary);
+  font-size: 1.4em;
+  margin-bottom: 16px;
+  text-align: center;
+}
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.card-title {
+  font-size: 0.85em;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+.status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+}
+.status-row + .status-row {
+  border-top: 1px solid var(--border);
+}
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.85em;
+  font-weight: 600;
+}
+.badge-ok { background: var(--ok); color: #000; }
+.badge-err { background: var(--err); color: #fff; }
+.badge-warn { background: var(--warn); color: #000; }
+.btn-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+button {
+  flex: 1;
+  min-width: 100px;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  background: var(--primary);
+  color: #000;
+  font-weight: 600;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+button:active { opacity: 0.7; }
+button.danger { background: var(--err); color: #fff; }
+#log {
+  background: #0a0a0a;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  font-family: "Cascadia Code", "Fira Code", monospace;
+  font-size: 0.8em;
+  max-height: 300px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: #aaa;
+}
+</style>
+</head>
+<body>
+
+<h1>UnTrickyStore</h1>
+
+<div class="card">
+  <div class="card-title">Environment</div>
+  <div class="status-row">
+    <span>Root</span>
+    <span id="root-type" class="badge badge-ok">...</span>
+  </div>
+  <div class="status-row">
+    <span>Kernel</span>
+    <span id="kernel-ver">...</span>
+  </div>
+  <div class="status-row">
+    <span>TrickyStore</span>
+    <span id="ts-status" class="badge badge-ok">...</span>
+  </div>
+  <div class="status-row">
+    <span>UTS Daemon</span>
+    <span id="uts-status" class="badge badge-ok">...</span>
+  </div>
+  <div class="status-row">
+    <span>Security Patch</span>
+    <span id="spl">...</span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">Actions</div>
+  <div class="btn-row">
+    <button onclick="exec('target')">Refresh Targets</button>
+    <button onclick="exec('propstate')">Spoof Props</button>
+  </div>
+  <div class="btn-row">
+    <button onclick="exec('patch-fetch')">Fetch SPL</button>
+    <button onclick="exec('patch-sync')">Sync SPL</button>
+  </div>
+  <div class="btn-row">
+    <button onclick="exec('ts-ctl restart')">Restart TS</button>
+    <button onclick="exec('uts-ctl restart')">Restart UTS</button>
+  </div>
+  <div class="btn-row">
+    <button onclick="exec('conflict-mod')">Check Conflicts</button>
+    <button onclick="exec('vbhash')">Fix VBHash</button>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">Log</div>
+  <div id="log">Loading...</div>
+</div>
+
+<script>
+const UTS_BIN = '/data/adb/modules/untrickystore/bin/uts';
+const CFG = '/data/adb/untrickystore';
+
+// KSU WebUI / MMRL exec bridge
+function shellExec(cmd) {
+  return new Promise((resolve) => {
+    try {
+      // KernelSU WebUI API
+      if (typeof ksu !== 'undefined' && ksu.exec) {
+        ksu.exec(cmd, {}, (ret) => resolve(ret));
+        return;
+      }
+      // MMRL API
+      if (typeof mmrl !== 'undefined' && mmrl.exec) {
+        mmrl.exec(cmd, (ret) => resolve(ret));
+        return;
+      }
+    } catch (_) {}
+    resolve({ errno: -1, stdout: '', stderr: 'No WebUI host API available' });
+  });
+}
+
+async function readFile(path) {
+  const ret = await shellExec(`cat "${path}" 2>/dev/null`);
+  return (ret && ret.stdout) ? ret.stdout.trim() : '';
+}
+
+async function refresh() {
+  const root = await readFile(`${CFG}/root.txt`);
+  const kernel = await readFile(`${CFG}/kernel.txt`);
+  const multi = await readFile(`${CFG}/multiple.txt`);
+  const spl = await readFile(`${CFG}/security_patch.txt`);
+
+  const rootEl = document.getElementById('root-type');
+  rootEl.textContent = root || 'Unknown';
+  rootEl.className = 'badge ' + (multi ? 'badge-warn' : (root ? 'badge-ok' : 'badge-err'));
+
+  document.getElementById('kernel-ver').textContent = kernel || '-';
+  document.getElementById('spl').textContent = spl || '-';
+
+  // Check processes
+  const tsRet = await shellExec('pidof trick_store 2>/dev/null || pidof trick_simulator 2>/dev/null');
+  const tsEl = document.getElementById('ts-status');
+  const tsRunning = tsRet && tsRet.stdout && tsRet.stdout.trim();
+  tsEl.textContent = tsRunning ? 'Running' : 'Stopped';
+  tsEl.className = 'badge ' + (tsRunning ? 'badge-ok' : 'badge-err');
+
+  const utsRet = await shellExec('pidof uts 2>/dev/null');
+  const utsEl = document.getElementById('uts-status');
+  const utsRunning = utsRet && utsRet.stdout && utsRet.stdout.trim();
+  utsEl.textContent = utsRunning ? 'Running' : 'Stopped';
+  utsEl.className = 'badge ' + (utsRunning ? 'badge-ok' : 'badge-err');
+
+  // Read log tail
+  const logRet = await shellExec(`tail -n 50 "${CFG}/log/log.log" 2>/dev/null`);
+  document.getElementById('log').textContent = (logRet && logRet.stdout) ? logRet.stdout : 'No log available';
+}
+
+async function exec(subcmd) {
+  const logEl = document.getElementById('log');
+  logEl.textContent += `\n> uts ${subcmd}\n`;
+  const ret = await shellExec(`${UTS_BIN} ${subcmd} 2>&1`);
+  if (ret && ret.stdout) logEl.textContent += ret.stdout + '\n';
+  if (ret && ret.stderr) logEl.textContent += ret.stderr + '\n';
+  logEl.scrollTop = logEl.scrollHeight;
+  setTimeout(refresh, 1000);
+}
+
+refresh();
+</script>
+</body>
+</html>

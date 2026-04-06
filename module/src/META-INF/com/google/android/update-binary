@@ -1,0 +1,53 @@
+#!/sbin/sh
+#
+# UnTrickyStore - update-binary (Magisk module installer entry)
+#
+# Copyright (C) 2025-2026 FRBLanApps
+# SPDX-License-Identifier: AGPL-3.0-or-later
+#
+# This script is invoked by Magisk's module installer.
+# It extracts the zip and calls customize.sh.
+
+TMPDIR=/dev/tmp
+PERSISTDIR=/sbin/.magisk/mirror/persist
+
+# Default permissions
+umask 022
+
+# Initial cleanup
+rm -rf "$TMPDIR" 2>/dev/null
+mkdir -p "$TMPDIR"
+
+# echo before loading util_functions
+ui_print() { echo "$1"; }
+require_new_magisk() {
+  ui_print "*******************************"
+  ui_print " Please install Magisk v20.4+! "
+  ui_print "*******************************"
+  exit 1
+}
+
+##########################################################################################
+# Environment
+##########################################################################################
+
+OUTFD=$2
+ZIPFILE=$3
+
+mount /data 2>/dev/null
+
+# Load Magisk's util_functions
+[ -f /data/adb/magisk/util_functions.sh ] || require_new_magisk
+. /data/adb/magisk/util_functions.sh
+[ "$MAGISK_VER_CODE" -lt 20400 ] && require_new_magisk
+
+setup_flashable
+mount_partitions
+api_level_arch_detect
+
+MODPATH="$TMPDIR/module"
+mkdir -p "$MODPATH"
+unzip -o "$ZIPFILE" -d "$MODPATH" >&2
+
+# Load customization script
+[ -f "$MODPATH/customize.sh" ] && . "$MODPATH/customize.sh"
