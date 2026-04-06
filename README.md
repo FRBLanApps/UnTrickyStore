@@ -84,10 +84,10 @@ PATH="/data/adb/modules/untrickystore/bin:$PATH"
 需要：JDK 21、Rust nightly（`aarch64-linux-android` target）、Android NDK 29、cargo-ndk、gettext
 
 ```sh
-./gradlew :module:assembleRelease
+./gradlew :module:zipRelease
 ```
 
-产物：`module/build/*.zip`（可刷入模块包）
+产物：`module/build/outputs/release/*.zip`（可刷入模块包）
 
 ## 许可证
 
