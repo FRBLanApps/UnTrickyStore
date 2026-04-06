@@ -60,7 +60,7 @@ fn main() -> ExitCode {
     let cmd = args[1].as_str();
     let rest: Vec<&str> = args[2..].iter().map(|s| s.as_str()).collect();
 
-    let result: Result<(), String> = match cmd {
+    let result: anyhow::Result<()> = match cmd {
         "daemon"       => daemon::run(),
         "rootdetect"   => rootdetect::run(),
         "propstate"    => props::propstate(),
@@ -84,15 +84,15 @@ fn main() -> ExitCode {
     match result {
         Ok(()) => ExitCode::SUCCESS,
         Err(e) => {
-            common::log_e("main", &e);
-            eprintln!("uts: {e}");
+            log::error!(target: "main", "{e:#}");
+            eprintln!("uts: {e:#}");
             ExitCode::FAILURE
         }
     }
 }
 
 /// Create default config directories and files (idempotent).
-fn init_cfg() -> Result<(), String> {
+fn init_cfg() -> anyhow::Result<()> {
     let cfg = common::uts_cfg();
     let _ = std::fs::create_dir_all(format!("{cfg}/keybox"));
     let _ = std::fs::create_dir_all(format!("{cfg}/log"));

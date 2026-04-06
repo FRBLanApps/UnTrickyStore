@@ -16,8 +16,8 @@ use std::collections::BTreeSet;
 /// - If `usr.txt` (user blacklist) exists, subtract those
 /// - If `sys.txt` (system additions) exists, add those
 /// - Write result to `<ts_dir>/target.txt`
-pub fn target() -> Result<(), String> {
-    common::log_i("target", "start");
+pub fn target() -> anyhow::Result<()> {
+    log::info!(target: "target", "start");
 
     let cfg = common::uts_cfg();
     let ts_dir = common::ts_dir();
@@ -56,6 +56,6 @@ pub fn target() -> Result<(), String> {
     let body: String = set.into_iter().collect::<Vec<_>>().join("\n");
     common::write_file(&target_path, &body);
 
-    common::log_i("target", &format!("wrote {} packages to target.txt", body.lines().count()));
+    log::info!(target: "target", "wrote {} packages to target.txt", body.lines().count());
     Ok(())
 }

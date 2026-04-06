@@ -20,32 +20,28 @@ fn uts_bin_path() -> String {
 /// Invoke uts subcommand.
 fn invoke(cmd: &str) {
     let bin = uts_bin_path();
-    common::log_i("daemon", &format!("invoke: uts {cmd}"));
+    log::info!(target: "daemon", "invoke: uts {cmd}");
     let _ = Command::new(&bin).arg(cmd).status();
 }
 
-pub fn run() -> Result<(), String> {
-    common::log_i("daemon", "starting daemon");
+pub fn run() -> anyhow::Result<()> {
+    log::info!(target: "daemon", "starting daemon");
 
     let path = "/data/app";
-    if !common::exists(path) {
-        return Err("daemon: /data/app not found".into());
-    }
+    anyhow::ensure!(common::exists(path), "daemon: /data/app not found");
 
     let fd = unsafe { libc::inotify_init() };
-    if fd < 0 {
-        return Err("daemon: inotify_init failed".into());
-    }
+    anyhow::ensure!(fd >= 0, "daemon: inotify_init failed");
 
-    let c_path = CString::new(path).map_err(|_| "daemon: invalid path")?;
+    let c_path = CString::new(path).map_err(|_| anyhow::anyhow!("daemon: invalid path"))?;
     let events = (libc::IN_CREATE | libc::IN_DELETE) as u32;
     let wd = unsafe { libc::inotify_add_watch(fd, c_path.as_ptr(), events) };
     if wd < 0 {
         unsafe { libc::close(fd); }
-        return Err("daemon: inotify_add_watch failed".into());
+        anyhow::bail!("daemon: inotify_add_watch failed");
     }
 
-    common::log_i("daemon", "watching /data/app");
+    log::info!(target: "daemon", "watching /data/app");
 
     let mut buf = [0u8; 1024];
     let mut last_fire = Instant::now() - Duration::from_secs(10);
@@ -56,7 +52,7 @@ pub fn run() -> Result<(), String> {
             libc::read(fd, buf.as_mut_ptr() as *mut libc::c_void, buf.len())
         };
         if n < 0 {
-            common::log_e("daemon", "inotify read error, exiting");
+            log::error!(target: "daemon", "inotify read error, exiting");
             break;
         }
         if last_fire.elapsed() < debounce {

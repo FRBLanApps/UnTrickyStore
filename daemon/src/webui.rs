@@ -6,6 +6,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 use crate::common;
+use anyhow::Context;
 
 // WebUI host apps in preference order
 const MMRL_PKG: &str = "com.dergoogler.mmrl.wx";
@@ -19,8 +20,8 @@ const KSU_WEBUI_PKG: &str = "io.github.a13e300.ksuwebui";
 /// 3. Fallback: install bundled webui.apk, then launch KSU WebUI
 ///
 /// The WebUI index page lives at `<uts_dir>/webroot/index.html`.
-pub fn launch() -> Result<(), String> {
-    common::log_i("webui", "launch");
+pub fn launch() -> anyhow::Result<()> {
+    log::info!(target: "webui", "launch");
 
     let uts_dir = common::uts_dir();
     let module_id = common::UTS;
@@ -42,18 +43,18 @@ pub fn launch() -> Result<(), String> {
     // Fallback: install bundled WebUI host, then launch
     let webui_apk = format!("{uts_dir}/webui.apk");
     if common::exists(&webui_apk) {
-        common::log_i("webui", "installing bundled webui host");
+        log::info!(target: "webui", "installing bundled webui host");
         if common::pm_install(&webui_apk) {
             return launch_ksu_webui(module_id);
         }
-        return Err("webui: failed to install webui host apk".into());
+        anyhow::bail!("webui: failed to install webui host apk");
     }
 
-    Err(crate::i18n::t("No WebUI host app found, please install MMRL or KSU WebUI"))
+    anyhow::bail!("{}", crate::i18n::t("No WebUI host app found, please install MMRL or KSU WebUI"))
 }
 
-fn launch_mmrl(module_id: &str) -> Result<(), String> {
-    common::log_i("webui", "launching MMRL");
+fn launch_mmrl(module_id: &str) -> anyhow::Result<()> {
+    log::info!(target: "webui", "launching MMRL");
 
     let uri = format!("mmrl://webui/{module_id}");
     let status = std::process::Command::new("am")
@@ -67,17 +68,17 @@ fn launch_mmrl(module_id: &str) -> Result<(), String> {
             &format!("{MMRL_PKG}/.ui.activity.webui.WebUIActivity"),
         ])
         .status()
-        .map_err(|e| format!("am start failed: {e}"))?;
+        .context("am start failed")?;
 
     if status.success() {
         Ok(())
     } else {
-        Err("webui: am start for MMRL failed".into())
+        anyhow::bail!("webui: am start for MMRL failed")
     }
 }
 
-fn launch_ksu_webui(module_id: &str) -> Result<(), String> {
-    common::log_i("webui", "launching KSU WebUI");
+fn launch_ksu_webui(module_id: &str) -> anyhow::Result<()> {
+    log::info!(target: "webui", "launching KSU WebUI");
 
     let status = std::process::Command::new("am")
         .args([
@@ -91,11 +92,11 @@ fn launch_ksu_webui(module_id: &str) -> Result<(), String> {
             &format!("{KSU_WEBUI_PKG}/.WebUIActivity"),
         ])
         .status()
-        .map_err(|e| format!("am start failed: {e}"))?;
+        .context("am start failed")?;
 
     if status.success() {
         Ok(())
     } else {
-        Err("webui: am start for KSU WebUI failed".into())
+        anyhow::bail!("webui: am start for KSU WebUI failed")
     }
 }

@@ -38,8 +38,8 @@ const CONFLICT_APPS: &[&str] = &[
 ];
 
 /// Check for conflicting modules. Returns Err with list if any found.
-pub fn conflict_mod() -> Result<(), String> {
-    common::log_i("conflict-mod", "start");
+pub fn conflict_mod() -> anyhow::Result<()> {
+    log::info!(target: "conflict-mod", "start");
 
     let modules_dir = common::MODULES;
     let mut found: Vec<&str> = Vec::new();
@@ -53,18 +53,18 @@ pub fn conflict_mod() -> Result<(), String> {
     }
 
     if found.is_empty() {
-        common::log_i("conflict-mod", "no conflicts");
+        log::info!(target: "conflict-mod", "no conflicts");
         Ok(())
     } else {
         let list = found.join(", ");
-        common::log_e("conflict-mod", &format!("conflicts found: {list}"));
-        Err(format!("conflicting modules: {list}"))
+        log::error!(target: "conflict-mod", "conflicts found: {list}");
+        anyhow::bail!("conflicting modules: {list}")
     }
 }
 
 /// Check for conflicting apps. Returns Err with list if any found.
-pub fn conflict_app() -> Result<(), String> {
-    common::log_i("conflict-app", "start");
+pub fn conflict_app() -> anyhow::Result<()> {
+    log::info!(target: "conflict-app", "start");
 
     let installed = common::pm_list_packages_3();
     let mut found: Vec<&str> = Vec::new();
@@ -76,11 +76,11 @@ pub fn conflict_app() -> Result<(), String> {
     }
 
     if found.is_empty() {
-        common::log_i("conflict-app", "no conflicts");
+        log::info!(target: "conflict-app", "no conflicts");
         Ok(())
     } else {
         let list = found.join(", ");
-        common::log_e("conflict-app", &format!("conflicts found: {list}"));
-        Err(format!("conflicting apps: {list}"))
+        log::error!(target: "conflict-app", "conflicts found: {list}");
+        anyhow::bail!("conflicting apps: {list}")
     }
 }

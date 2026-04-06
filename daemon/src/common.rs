@@ -1,10 +1,9 @@
 // UnTrickyStore - common utilities
-// Paths, logging, i18n, shell helpers
+// Paths, logging, shell helpers, HTTP
 //
 // Copyright (C) 2025-2026 FRBLanApps
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-use std::fmt::Write as FmtWrite;
 use std::fs::{self, OpenOptions};
 use std::io::Write;
 use std::process::Command;
@@ -24,27 +23,40 @@ pub fn ts_cfg() -> String { format!("{ADB}/{TS}") }
 pub fn uts_bin() -> String { format!("{}/{UTS}/bin", MODULES) }
 pub fn log_path() -> String { format!("{ADB}/{UTS}/log/log.log") }
 
-// ── i18n (see i18n.rs) ──────────────────────────────────────
+// ── Logging (log crate + FileLogger) ────────────────────────
 
-// ── Logging ─────────────────────────────────────────────────
+struct FileLogger;
+
+impl log::Log for FileLogger {
+    fn enabled(&self, _metadata: &log::Metadata) -> bool { true }
+
+    fn log(&self, record: &log::Record) {
+        let path = log_path();
+        let ts = timestamp();
+        let pid = unsafe { libc::getpid() };
+        let level = match record.level() {
+            log::Level::Error => 'E',
+            log::Level::Warn => 'W',
+            _ => 'I',
+        };
+        let tag = record.target();
+        let msg = record.args();
+        let line = format!("{ts}  {pid}  {pid} {level} System.out: [UTS]<{tag}>{msg}\n");
+        if let Ok(mut f) = OpenOptions::new().create(true).append(true).open(&path) {
+            let _ = f.write_all(line.as_bytes());
+        }
+    }
+
+    fn flush(&self) {}
+}
+
+static LOGGER: FileLogger = FileLogger;
+
 pub fn log_init() {
     let dir = format!("{ADB}/{UTS}/log");
     let _ = fs::create_dir_all(&dir);
+    let _ = log::set_logger(&LOGGER).map(|()| log::set_max_level(log::LevelFilter::Info));
 }
-
-fn log_raw(level: char, tag: &str, msg: &str) {
-    let path = log_path();
-    let ts = timestamp();
-    let pid = unsafe { libc::getpid() };
-    let line = format!("{ts}  {pid}  {pid} {level} System.out: [UTS]<{tag}>{msg}\n");
-    if let Ok(mut f) = OpenOptions::new().create(true).append(true).open(&path) {
-        let _ = f.write_all(line.as_bytes());
-    }
-}
-
-pub fn log_i(tag: &str, msg: &str) { log_raw('I', tag, msg); }
-pub fn log_w(tag: &str, msg: &str) { log_raw('W', tag, msg); }
-pub fn log_e(tag: &str, msg: &str) { log_raw('E', tag, msg); }
 
 fn timestamp() -> String {
     unsafe {
@@ -115,37 +127,23 @@ pub fn pidof(name: &str) -> String {
 
 pub fn kill_9(name: &str) {
     let pids = pidof(name);
-    for pid in pids.split_whitespace() {
-        let _ = Command::new("kill").args(["-9", pid]).status();
+    for tok in pids.split_whitespace() {
+        if let Ok(pid) = tok.parse::<i32>() {
+            unsafe { libc::kill(pid, libc::SIGKILL); }
+        }
     }
 }
 
-/// Fetch URL content via curl or busybox wget
+/// Fetch URL content via ureq (rustls TLS)
 pub fn crawl(url: &str) -> String {
-    // Try curl first
-    if let Ok(o) = Command::new("curl")
-        .args(["--connect-timeout", "10", "-Ls", url])
-        .output()
-    {
-        if o.status.success() {
-            return String::from_utf8_lossy(&o.stdout).to_string();
-        }
+    let agent = ureq::AgentBuilder::new()
+        .timeout_connect(std::time::Duration::from_secs(10))
+        .timeout_read(std::time::Duration::from_secs(30))
+        .build();
+    match agent.get(url).call() {
+        Ok(resp) => resp.into_string().unwrap_or_default(),
+        Err(_) => String::new(),
     }
-    // Fallback: try busybox wget
-    for prefix in &["/data/adb/ap/bin", "/data/adb/ksu/bin", "/data/adb/magisk"] {
-        let bb = format!("{prefix}/busybox");
-        if std::path::Path::new(&bb).exists() {
-            if let Ok(o) = Command::new(&bb)
-                .args(["wget", "-T", "10", "--no-check-certificate", "-qO-", url])
-                .output()
-            {
-                if o.status.success() {
-                    return String::from_utf8_lossy(&o.stdout).to_string();
-                }
-            }
-        }
-    }
-    String::new()
 }
 
 /// Read file to string, empty on error

@@ -9,7 +9,7 @@
 use crate::common;
 use std::process::Command;
 
-pub fn run() -> Result<(), String> {
+pub fn run() -> anyhow::Result<()> {
     let cfg = common::uts_cfg();
     let _ = std::fs::create_dir_all(&cfg);
 
@@ -79,7 +79,7 @@ pub fn run() -> Result<(), String> {
     };
 
     common::write_file(&format!("{cfg}/root.txt"), root);
-    common::log_i("rootdetect", &format!("root={root}"));
+    log::info!(target: "rootdetect", "root={root}");
 
     // Kernel-level multi-detection (modules present in kernel but not active as primary)
     let kernel_count = [ksu_ktag, apatch_ktag, magisk_ktag]

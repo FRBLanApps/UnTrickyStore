@@ -15,14 +15,14 @@ const PATCH_FILE: &str = "security_patch.txt";
 /// Reads `security_patch.txt` from UTS config, normalizes to YYYY-MM-DD,
 /// and sets `ro.vendor.build.security_patch` + `ro.build.version.security_patch`.
 /// Then kills GMS unstable (com.google.android.gms.unstable) to force re-evaluation.
-pub fn sync() -> Result<(), String> {
-    common::log_i("patch-sync", "start");
+pub fn sync() -> anyhow::Result<()> {
+    log::info!(target: "patch-sync", "start");
 
     let cfg = common::uts_cfg();
     let path = format!("{cfg}/{PATCH_FILE}");
 
     if !common::exists(&path) {
-        common::log_i("patch-sync", "no security_patch.txt, skip");
+        log::info!(target: "patch-sync", "no security_patch.txt, skip");
         return Ok(());
     }
 
@@ -30,8 +30,8 @@ pub fn sync() -> Result<(), String> {
     let date = normalize_date(raw.trim());
 
     if date.is_empty() {
-        common::log_w("patch-sync", "invalid date in security_patch.txt");
-        return Err("invalid date".into());
+        log::warn!(target: "patch-sync", "invalid date in security_patch.txt");
+        anyhow::bail!("invalid date");
     }
 
     common::resetprop("ro.vendor.build.security_patch", &date);
@@ -41,16 +41,16 @@ pub fn sync() -> Result<(), String> {
     let pids = common::pidof("com.google.android.gms.unstable");
     if !pids.is_empty() {
         common::kill_9("com.google.android.gms.unstable");
-        common::log_i("patch-sync", "killed GMS unstable");
+        log::info!(target: "patch-sync", "killed GMS unstable");
     }
 
-    common::log_i("patch-sync", &format!("applied {date}"));
+    log::info!(target: "patch-sync", "applied {date}");
     Ok(())
 }
 
 /// Fetch latest security patch date from source.android.com and persist.
-pub fn fetch() -> Result<(), String> {
-    common::log_i("patch-fetch", "start");
+pub fn fetch() -> anyhow::Result<()> {
+    log::info!(target: "patch-fetch", "start");
 
     let url = "https://source.android.com/docs/security/bulletin/pixel";
     let cfg = common::uts_cfg();
@@ -58,7 +58,7 @@ pub fn fetch() -> Result<(), String> {
 
     let body = common::crawl(url);
     if body.is_empty() {
-        return Err("patch-fetch: failed to download bulletin page".into());
+        anyhow::bail!("patch-fetch: failed to download bulletin page");
     }
 
     // Extract date from page content
@@ -66,11 +66,11 @@ pub fn fetch() -> Result<(), String> {
     let date = extract_patch_date(&body);
 
     if date.is_empty() {
-        return Err("patch-fetch: could not parse date from bulletin".into());
+        anyhow::bail!("patch-fetch: could not parse date from bulletin");
     }
 
     common::write_file(&path, &date);
-    common::log_i("patch-fetch", &format!("saved {date}"));
+    log::info!(target: "patch-fetch", "saved {date}");
     Ok(())
 }
 

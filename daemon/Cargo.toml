@@ -14,6 +14,9 @@ path = "src/main.rs"
 [dependencies]
 libc = "0.2"
 gettext = "0.4"
+log = "0.4"
+anyhow = "1"
+ureq = { version = "2", default-features = false, features = ["tls"] }
 
 [profile.release]
 lto = true

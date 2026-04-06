@@ -9,8 +9,8 @@
 use crate::common;
 
 /// Spoof bootloader-related properties to appear locked/verified.
-pub fn propstate() -> Result<(), String> {
-    common::log_i("propstate", "start");
+pub fn propstate() -> anyhow::Result<()> {
+    log::info!(target: "propstate", "start");
 
     // Get vbmeta partition size for property
     let vbmeta_size = {
@@ -94,13 +94,13 @@ pub fn propstate() -> Result<(), String> {
     crs("ro.adb.secure", "1");
     crs("ro.secure", "1");
 
-    common::log_i("propstate", "done");
+    log::info!(target: "propstate", "done");
     Ok(())
 }
 
 /// Fix VBMeta digest hash by querying the service app's ContentProvider.
-pub fn vbhash() -> Result<(), String> {
-    common::log_i("vbhash", "start");
+pub fn vbhash() -> anyhow::Result<()> {
+    log::info!(target: "vbhash", "start");
 
     let cfg = common::uts_cfg();
     let uts_dir = common::uts_dir();
@@ -129,11 +129,11 @@ pub fn vbhash() -> Result<(), String> {
     if is_ts245 {
         if let Some(persisted) = read_cached_hash(&cache_file) {
             if persisted == now {
-                common::log_i("vbhash", &format!("cached hash matches current: {now}"));
+                log::info!(target: "vbhash", "cached hash matches current: {now}");
                 return Ok(());
             }
             common::resetprop_n("ro.boot.vbmeta.digest", &persisted);
-            common::log_i("vbhash", &format!("restored cached hash: {persisted}"));
+            log::info!(target: "vbhash", "restored cached hash: {persisted}");
             return Ok(());
         }
     }
@@ -142,14 +142,14 @@ pub fn vbhash() -> Result<(), String> {
     let hash = query_content_provider(&apk)?;
 
     if hash.is_empty() {
-        return Err("vbhash: empty hash from ContentProvider".into());
+        anyhow::bail!("vbhash: empty hash from ContentProvider");
     }
 
     if now == hash {
-        common::log_i("vbhash", &format!("no change needed, current: {now}"));
+        log::info!(target: "vbhash", "no change needed, current: {now}");
     } else {
         common::resetprop_n("ro.boot.vbmeta.digest", &hash);
-        common::log_i("vbhash", &format!("set digest to {hash}"));
+        log::info!(target: "vbhash", "set digest to {hash}");
     }
 
     // Cache for persistence (TS >= 245)
@@ -171,18 +171,18 @@ fn read_cached_hash(path: &str) -> Option<String> {
 }
 
 /// Install the service APK, query content://Provider for VBHash, uninstall.
-fn query_content_provider(apk: &str) -> Result<String, String> {
+fn query_content_provider(apk: &str) -> anyhow::Result<String> {
     let provider_pkg = "io.github.frblanapps.untrickystore";
     let provider_uri = "content://Provider";
 
     // Install
-    common::log_i("vbhash", "installing service app");
+    log::info!(target: "vbhash", "installing service app");
     if !common::pm_install(apk) {
-        return Err("vbhash: failed to install service.apk".into());
+        anyhow::bail!("vbhash: failed to install service.apk");
     }
 
     // Query via content call
-    common::log_i("vbhash", "querying ContentProvider");
+    log::info!(target: "vbhash", "querying ContentProvider");
     let output = std::process::Command::new("content")
         .args(["call", "--uri", provider_uri, "--method", "GET"])
         .output()
@@ -197,7 +197,7 @@ fn query_content_provider(apk: &str) -> Result<String, String> {
             let text = String::from_utf8_lossy(&o.stdout);
             for line in text.lines() {
                 if line.contains("[UTS]") {
-                    common::log_i("vbhash", line);
+                    log::info!(target: "vbhash", "{line}");
                 }
             }
         });
@@ -206,14 +206,14 @@ fn query_content_provider(apk: &str) -> Result<String, String> {
     let hash = extract_vbhash(&output);
 
     // Uninstall
-    common::log_i("vbhash", "uninstalling service app");
+    log::info!(target: "vbhash", "uninstalling service app");
     common::pm_uninstall(provider_pkg);
 
     if let Some(h) = hash {
         Ok(h)
     } else {
         // Fallback: generate random hash for boot signature
-        common::log_w("vbhash", "content provider returned no valid hash, generating random");
+        log::warn!(target: "vbhash", "content provider returned no valid hash, generating random");
         let random = generate_random_hex(64);
         Ok(random)
     }

@@ -10,8 +10,8 @@
 use crate::common;
 
 /// Control TrickyStore daemon. Action: "start", "stop", "restart".
-pub fn ts_ctl(action: &str) -> Result<(), String> {
-    common::log_i("ts-ctl", &format!("action={action}"));
+pub fn ts_ctl(action: &str) -> anyhow::Result<()> {
+    log::info!(target: "ts-ctl", "action={action}");
 
     let ts_dir = common::ts_dir();
     let service_sh = format!("{ts_dir}/service.sh");
@@ -27,11 +27,11 @@ pub fn ts_ctl(action: &str) -> Result<(), String> {
     match action {
         "stop" => {
             common::kill_9(daemon_name);
-            common::log_i("ts-ctl", &format!("stopped {daemon_name}"));
+            log::info!(target: "ts-ctl", "stopped {daemon_name}");
         }
         "start" => {
             if !common::pidof(daemon_name).is_empty() {
-                common::log_w("ts-ctl", "already running");
+                log::warn!(target: "ts-ctl", "already running");
                 return Ok(());
             }
             // Execute service.sh to start
@@ -39,9 +39,9 @@ pub fn ts_ctl(action: &str) -> Result<(), String> {
                 let _ = std::process::Command::new("sh")
                     .arg(&service_sh)
                     .spawn();
-                common::log_i("ts-ctl", "started via service.sh");
+                log::info!(target: "ts-ctl", "started via service.sh");
             } else {
-                return Err(crate::i18n::t("TrickyStore service.sh not found"));
+                anyhow::bail!("{}", crate::i18n::t("TrickyStore service.sh not found"));
             }
         }
         "restart" => {
@@ -51,35 +51,35 @@ pub fn ts_ctl(action: &str) -> Result<(), String> {
                 let _ = std::process::Command::new("sh")
                     .arg(&service_sh)
                     .spawn();
-                common::log_i("ts-ctl", "restarted");
+                log::info!(target: "ts-ctl", "restarted");
             }
         }
-        _ => return Err(format!("ts-ctl: unknown action '{action}'")),
+        _ => anyhow::bail!("ts-ctl: unknown action '{action}'"),
     }
 
     Ok(())
 }
 
 /// Control UTS daemon process. Action: "start", "stop", "restart".
-pub fn uts_ctl(action: &str) -> Result<(), String> {
-    common::log_i("uts-ctl", &format!("action={action}"));
+pub fn uts_ctl(action: &str) -> anyhow::Result<()> {
+    log::info!(target: "uts-ctl", "action={action}");
 
     let uts = common::uts_bin();
 
     match action {
         "stop" => {
             common::kill_9("uts");
-            common::log_i("uts-ctl", "stopped");
+            log::info!(target: "uts-ctl", "stopped");
         }
         "start" => {
             if !common::pidof("uts").is_empty() {
-                common::log_w("uts-ctl", "already running");
+                log::warn!(target: "uts-ctl", "already running");
                 return Ok(());
             }
             let _ = std::process::Command::new(&uts)
                 .arg("daemon")
                 .spawn();
-            common::log_i("uts-ctl", "started daemon");
+            log::info!(target: "uts-ctl", "started daemon");
         }
         "restart" => {
             common::kill_9("uts");
@@ -87,9 +87,9 @@ pub fn uts_ctl(action: &str) -> Result<(), String> {
             let _ = std::process::Command::new(&uts)
                 .arg("daemon")
                 .spawn();
-            common::log_i("uts-ctl", "restarted daemon");
+            log::info!(target: "uts-ctl", "restarted daemon");
         }
-        _ => return Err(format!("uts-ctl: unknown action '{action}'")),
+        _ => anyhow::bail!("uts-ctl: unknown action '{action}'"),
     }
 
     Ok(())
@@ -97,8 +97,8 @@ pub fn uts_ctl(action: &str) -> Result<(), String> {
 
 /// Generate module description string with live status and write to module.prop.
 /// This appears in Magisk/KSU module manager as the module description.
-pub fn status() -> Result<(), String> {
-    common::log_i("status", "refreshing description");
+pub fn status() -> anyhow::Result<()> {
+    log::info!(target: "status", "refreshing description");
 
     let uts_dir = common::uts_dir();
     let cfg = common::uts_cfg();
@@ -106,7 +106,7 @@ pub fn status() -> Result<(), String> {
     let module_prop = format!("{uts_dir}/module.prop");
 
     if !common::exists(&module_prop) {
-        return Err("status: module.prop not found".into());
+        anyhow::bail!("status: module.prop not found");
     }
 
     // --- Gather info ---
@@ -191,7 +191,7 @@ pub fn status() -> Result<(), String> {
     }
 
     common::write_file(&module_prop, &lines.join("\n"));
-    common::log_i("status", &format!("desc: {desc}"));
+    log::info!(target: "status", "desc: {desc}");
     Ok(())
 }
 
